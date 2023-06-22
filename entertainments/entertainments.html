@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<header>
+<title>Entertainments</title>
+    
+<script type = "text/javascript" async
+  src = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+});
+</script>
+    
+
+<style>
+    body 
+    {
+        font-family: "Arial";
+        background-color: black;
+    }
+
+    table.titles
+    {
+        border: 2px;
+        border-style: double;
+        border-color: cadetblue;
+        background-color: azure;
+    }
+    
+    table.titles th
+    {
+        border: 1px dotted;
+        padding: 2px;
+    }
+    
+    table.titles td
+    {
+        padding: 5px;
+        text-align: center;
+    }
+    
+    table.titles td:hover
+    {
+        background-color: darkseagreen;
+    }
+    
+    li 
+    {
+        line-height: 200%
+    }
+    
+    ref
+    {
+        color: burlywood;
+    }
+
+    hr.thick
+    {
+    	height: 5px;
+    	background-color: brown;
+    	border-color: sandybrown;
+    }
+
+	hr.thin
+    {
+    	height: 1px;
+    	background-color: brown;
+    	border-color: sandybrown;
+    }
+
+    #persianball
+    {
+        color: crimson;
+        background-color: greenyellow;
+        border: 15px;
+        border-radius: 40px;
+        border-color: green;
+        border-style: solid;
+        width: 50px;
+        height: 50px;
+        display: table-cell;
+        vertical-align: middle;
+        text-emphasis: 1;
+        position: absolute;
+        visibility: hidden;
+    }
+
+    #gregorianball
+    {
+        color: darkmagenta;
+        background-color: fuchsia;
+        border: 15px;
+        border-radius: 40px;
+        border-color: purple;
+        border-style: solid;
+        width: 50px;
+        height: 50px;
+        display: table-cell;
+        vertical-align: middle;
+        text-emphasis: 1;
+        position: absolute;
+        visibility: hidden;
+    }
+</style>
+
+<script>
+    var dx = [];
+    var dy = [];
+    var elements_start;
+    var number;
+    var elements = [];
+    var elements_center_x = [];
+    var elements_center_y = [];
+    var elements_radius = [];
+    var elements_collision = [];
+
+    function initialize()
+    {
+        elements = document.getElementsByClassName("ball");
+        number = elements.length;
+        
+        for(i = 0; i < number; i++)
+        {
+            elements_radius[i] = (elements[i].getBoundingClientRect().right - elements[i].getBoundingClientRect().left) / 2;
+            
+            elements[i].style.left = Math.random() * (window.innerWidth - 2 * elements_radius[i]) + "px";
+            elements[i].style.top = Math.random() * (window.innerHeight - 2 * elements_radius[i]) + "px";
+            
+            dx[i] = (Math.random() < 0.5 ? -1 : 1) * (Math.random() * 2 + 1);
+            dy[i] = (Math.random() < 0.5 ? -1 : 1) * (Math.random() * 2 + 1);
+            
+            elements_collision[i] = [];
+            for(j = i + 1; j < number; j++)
+            {
+                elements_collision[i][j] = true;
+            }
+            
+            elements[i].style.visibility = "visible";
+        }
+        start();
+    }
+
+    function start()
+    {
+        elements_start = setInterval('billiard()',10);
+    }
+    
+    function stop()
+    {
+        window.clearInterval(elements_start);
+    }
+    
+    function billiard()
+    {
+        elements = document.getElementsByClassName("ball");
+        
+        for(i = 0; i < number; i++)
+        {
+            if(elements[i].getBoundingClientRect().right + dx[i] >= window.innerWidth)
+                dx[i] = -Math.abs(dx[i]);
+            if(elements[i].getBoundingClientRect().left + dx[i] <= 0)
+                dx[i] = Math.abs(dx[i]);
+            if(elements[i].getBoundingClientRect().bottom + dy[i] >= window.innerHeight)
+                dy[i] = -Math.abs(dy[i]);
+            if(elements[i].getBoundingClientRect().top + dy[i] <= 0)
+                dy[i] = Math.abs(dy[i]);
+
+            elements[i].style.left = elements[i].getBoundingClientRect().left + dx[i] + "px";
+            elements[i].style.top = elements[i].getBoundingClientRect().top + dy[i] + "px";
+        }
+        
+        for(i = 0; i < number; i++)
+        {
+            elements_center_x[i] = (elements[i].getBoundingClientRect().left + elements[i].getBoundingClientRect().right) / 2;
+            elements_center_y[i] = (elements[i].getBoundingClientRect().top + elements[i].getBoundingClientRect().bottom) / 2;
+        }
+        
+        for(i = 0; i < number; i++)
+            for(j = i + 1; j < number; j++)
+                collision(i,j);
+    }
+    
+    function collision(i,j)
+    {
+        if(Math.pow(elements_center_x[i] - elements_center_x[j],2) + Math.pow(elements_center_y[i] - elements_center_y[j],2) <= Math.pow(elements_radius[i] + elements_radius[j],2))
+        {
+            if(elements_collision[i][j] == false)    
+            {
+                if(dx[i] * dx[j] < 0)
+                {
+                    dx[i] = -dx[i];
+                    dx[j] = -dx[j];
+                }
+                else
+                {
+                    if((elements_center_x[i] < elements_center_x[j]) && (dx[i] > 0))
+                        dx[i] = - dx[i];
+                    else if((elements_center_x[i] < elements_center_x[j]) && (dx[i] < 0))
+                        dx[j] = - dx[j];
+                    else if((elements_center_x[i] > elements_center_x[j]) && (dx[i] > 0))
+                        dx[j] = - dx[j];
+                    else if((elements_center_x[i] > elements_center_x[j]) && (dx[i] > 0))
+                        dx[i] = - dx[i];
+                }
+
+                if(dy[i] * dy[j] < 0)
+                {
+                    dy[i] = -dy[i];
+                    dy[j] = -dy[j];
+                }
+                else
+                {
+                    if((elements_center_y[i] < elements_center_y[j]) && (dy[i] > 0))
+                        dy[i] = - dy[i];
+                    else if((elements_center_y[i] < elements_center_y[j]) && (dy[i] < 0))
+                        dy[j] = - dy[j];
+                    else if((elements_center_y[i] > elements_center_y[j]) && (dy[i] > 0))
+                        dy[j] = - dy[j];
+                    else if((elements_center_y[i] > elements_center_y[j]) && (dy[i] > 0))
+                        dy[i] = - dyx[i];
+                }
+
+                elements_collision[i][j] = true;
+            }
+        } 
+        else 
+        {
+            elements_collision[i][j] = false;
+        }
+    }    
+</script>    
+</header>
+
+<body style = "color: darkgreen" onload = "initialize()">
+    <div class="ball" id="persianball" onmouseover = "stop()" onmouseout = "start()">
+        <a href="https://iasbs.ac.ir/~farrokhi/entertainments/1396.html" style="text-decoration: none; position: absolute; top: 16px; left: 7px"><b>1396</b></a>
+    </div>
+    <div class="ball" id="persianball" onmouseover = "stop()" onmouseout = "start()">
+        <a href="https://iasbs.ac.ir/~farrokhi/entertainments/1397.html" style="text-decoration: none; position: absolute; top: 16px; left: 7px"><b>1397</b></a>
+    </div>
+    <div class="ball" id="persianball" onmouseover = "stop()" onmouseout = "start()">
+        <a href="https://iasbs.ac.ir/~farrokhi/entertainments/1398.html" style="text-decoration: none; position: absolute; top: 16px; left: 7px"><b>1398</b></a>
+    </div>
+    <div class="ball" id="persianball" onmouseover = "stop()" onmouseout = "start()">
+        <a href="https://iasbs.ac.ir/~farrokhi/entertainments/1399.html" style="text-decoration: none; position: absolute; top: 16px; left: 7px"><b>1399</b></a>
+    </div>
+    <div class="ball" id="gregorianball" onmouseover = "stop()" onmouseout = "start()">
+        <a href="https://iasbs.ac.ir/~farrokhi/entertainments/2019.html" style="text-decoration: none; position: absolute; top: 16px; left: 7px"><b>2019</b></a>
+    </div>
+    <div class="ball" id="gregorianball" onmouseover = "stop()" onmouseout = "start()">
+        <a href="https://iasbs.ac.ir/~farrokhi/entertainments/2020.html" style="text-decoration: none; position: absolute; top: 16px; left: 7px"><b>2020</b></a>
+    </div>
+</body>
+</html>

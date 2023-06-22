@@ -1,0 +1,419 @@
+Print("                                                                                                        \n");
+Print(" -------------------------------------------------------------------------------------------------------\n");
+Print(" - Positive Matching Decomposition Package                                                                                       -\n");
+Print(" -------------------------------------------------------------------------------------------------------\n");
+Print(" - This package contains the following functions :                                                     -\n");
+Print(" -------------------------------------------------------------------------------------------------------\n");
+Print(" - AntlerFreePart(G)               : The maximum pendant-free subgraph of G                            -\n");
+Print(" - CompleteGraphPositiveMatching   : Compute a minimum sized positive matching decomposition of        -\n");
+Print(" -                 Decomposition(n):                                             the complete graph Kn -\n");
+Print(" - IsMatching(G, M)                : Is the set M of edges of the graph G a matching in G?             -\n");
+Print(" - IsPositiveMatching(G, M)        : Is the given set M of edges a positive matching in the graph G?   -\n");
+Print(" - IsPositiveMatchingN(G, M)       : Is the given matching M is positive in the graph G?               -\n");
+Print(" - MaximalElements(list)           : Compute maximal elements in the poset of sets in list             -\n");
+Print(" - MaximalPositiveMatchings(G)     : Compute all maximal positive matchings in the graph G             -\n");
+Print(" - MinimumPositiveMatching         : Compute a minimum sized positive matching decomposition of        -\n");
+Print(" -                 Decomposition(G):                                                       the graph G -\n");
+Print(" - MinimalPositiveMatching         : Compute the minimum size of positive matching decompositions of   -\n");
+Print(" -             DecompositionSize(G):                                                       the graph G -\n");
+Print(" - MinimumPositiveMatching         : Compute the minimum size of positive matching decompositions of   -\n");
+Print(" -   DecompositionSizeAntlerFree(G):                    the graph G by analysing antler-free part of G -\n");
+Print(" - PositiveMatchingDecomposition   : The first slope-related pmd of the bipartite graph G              -\n");
+Print(" -                      BySlopes(G):                                                                   -\n");
+Print(" - RemoveEdges(G, E)               : Remove edges in E from the graph G                                -\n");
+Print(" -------------------------------------------------------------------------------------------------------\n");
+Print(" - Abbreviations                                                                                       -\n");
+Print(" -------------------------------------------------------------------------------------------------------\n");
+Print(" - AFP     : AntlerFreePart                                                                            -\n");
+Print(" - CGPMD   : CompleteGraphPositiveMatchingDecomposition                                                -\n");
+Print(" - IM      : IsMatching                                                                                -\n");
+Print(" - IPM     : IsPositiveMatching                                                                        -\n");
+Print(" - IPMN    : IsPositiveMatchingN                                                                       -\n");
+Print(" - ME      : MaximalElements                                                                           -\n");
+Print(" - MPM     : MaximalPositiveMatchings                                                                  -\n");
+Print(" - MPMD    : MinimumPositiveMatchingDecomposition                                                      -\n");
+Print(" - MPMDS   : MinimumPositiveMatchingDecompositionSize                                                  -\n");
+Print(" - MPMDSAF : MinimumPositiveMatchingDecompositionSizeAntlerFree                                        -\n");
+Print(" - PMDBS   : PositiveMatchingDecompositionBySlopes                                                     -\n");
+Print(" - RE      : RemoveEdges                                                                               -\n");
+Print(" -------------------------------------------------------------------------------------------------------\n");
+Print(" - Written by                      : M. Farrokhi D. G.                                                 -\n");
+Print(" -------------------------------------------------------------------------------------------------------\n");
+Print("                                                                                                        \n");
+
+##################################################
+# The function returns the graph obtained from G 
+# by removing edges in E.
+##################################################
+RemoveEdges := function(G, E)
+return Graph(Group(()), Vertices(G), OnPoints, function(x,y) return IsEdge(G, [x, y]) and not [x, y] in E and not [y, x] in E; end, true);
+end;
+
+##################################################
+# The function returns the set of all maximal 
+# elements in the set list of sets.
+##################################################
+MaximalElements := function(list)
+return Filtered(list, x->Number(Filtered(list, y->IsSubsetSet(y, x)))=1);
+end;
+
+##################################################
+# The function returns the maximum subgraph of G 
+# without pendants.
+##################################################
+AntlerFreePart := function(G)
+local vertices, neighbors, pendants, u, v, uposition, vposition;
+
+vertices := Vertices(G);
+neighbors := List(vertices, v -> Adjacency(G, v));
+
+for u in Reversed(vertices) do
+	if Number(neighbors[u]) = 0 then
+		Remove(vertices, u);
+		Remove(neighbors, u);
+	fi;
+od;
+
+repeat
+	pendants := Filtered([1..Number(vertices)], i -> Number(neighbors[i]) = 1);
+
+	for uposition in Reversed(pendants) do
+		u := vertices[uposition];
+		if Number(neighbors[uposition]) > 0 then
+			v := neighbors[uposition][1];
+			vposition := Position(vertices, v);
+			RemoveSet(neighbors[vposition], u);
+		fi;
+		Remove(vertices, uposition);
+		Remove(neighbors, uposition);
+	od;
+until Number(pendants) = 0;
+
+return Graph(Group(()), vertices, OnPoints, function(x, y) return IsEdge(G, Set([x, y])); end, true);
+end;
+
+##################################################
+# The function returns whether the set M of edges 
+# is a matching of G.
+##################################################
+IsMatching := function(G, M)
+local ismatching, edges;
+edges := UndirectedEdges(G);
+if IsSubset(Vertices(G), Unique(Flat(M))) then
+	if Number(Filtered(M, e -> Number(e) <> 2))=0 then
+		if Number(Unique(Flat(M))) = 2 * Number(M) then 
+			if Number(Filtered(M, e -> not (e in edges or Reversed(e) in edges)))=0 then 
+				ismatching := true;
+			else
+				ismatching := false;
+			fi;
+		else
+			ismatching := false;
+		fi;
+	else
+		ismatching := false;
+	fi;
+else
+	ismatching := false;
+fi;
+
+return ismatching;
+end;
+
+##################################################
+# The function returns whether the matching M of 
+# G is a positive matching.
+##################################################
+IsPositiveMatching := function(G, M)
+local H, ispositive;
+H := InducedSubgraph(G, Unique(Flat(M)));
+ispositive := IsMatching(G, M);
+while Number(Vertices(H)) > 0 and ispositive = true do
+	if 1 in VertexDegrees(H) then
+		H := InducedSubgraph(H, Filtered(Vertices(H), h -> (VertexDegree(H, h) - 1) * Product(List(Adjacency(H, h), k -> VertexDegree(H, k) - 1)) <> 0));
+	else
+		ispositive := false;
+	fi;
+od;
+return ispositive;
+end;
+
+##################################################
+# The function returns whether the set M of edges 
+# of G is a positive matching assuming M is a 
+# matching.
+##################################################
+IsPositiveMatchingN := function(G, M)
+local H, ispositive;
+H := InducedSubgraph(G, Unique(Flat(M)));
+ispositive := true;
+while Number(Vertices(H)) > 0 and ispositive = true do
+	if 1 in VertexDegrees(H) then
+		H := InducedSubgraph(H, Filtered(Vertices(H), h -> (VertexDegree(H, h) - 1) * Product(List(Adjacency(H, h), k -> VertexDegree(H, k) - 1)) <> 0));
+	else
+		ispositive := false;
+	fi;
+od;
+return ispositive;
+end;
+
+##################################################
+# The function returns all maximal positive 
+# matchings of G = arg[1] with possible 
+# automorphism group A = arg[2].
+##################################################
+MaximalPositiveMatchings := function(arg)
+local maximalpositivematchings, matching, newmatching, edges, e, G, A;
+
+G := arg[1];
+
+if IsNullGraph(G) then
+	return [[]];
+else
+	if Number(arg)=1 then
+		A := AutGroupGraph(G);
+	else
+		A := arg[2];
+	fi;
+
+	edges := List(Orbits(A, UndirectedEdges(G), OnSets), x -> Representative(x));
+	maximalpositivematchings := [];
+	
+	for e in edges do
+		AddSet(maximalpositivematchings, [e]);
+		for matching in MaximalPositiveMatchings(RemoveEdges(G, Filtered(UndirectedEdges(G), ee -> Intersection(e, ee) <> [])), Stabilizer(A, e, OnSets)) do
+			newmatching := Set(Concatenation(matching, [e]));
+			if IsPositiveMatchingN(G, newmatching) then
+				AddSet(maximalpositivematchings, newmatching);
+			fi;
+		od;
+	od;
+	
+	if Number(arg) = 1 then
+		return MaximalElements(maximalpositivematchings);
+	else
+		return maximalpositivematchings;
+	fi;
+fi;
+end;
+
+##################################################
+# The function returns the minimum size of 
+# positive matching decompositions of the graph G.
+##################################################
+MinimumPositiveMatchingDecompositionSize := function(G)
+local mpmds, matching;
+if IsNullGraph(G) then
+	return 0;
+else
+	mpmds := Number(UndirectedEdges(G));
+	for matching in MaximalPositiveMatchings(G) do
+		mpmds := Minimum(mpmds, 1+MinimumPositiveMatchingDecompositionSize(RemoveEdges(G, matching)));
+	od;
+	return mpmds;
+fi;
+end;
+
+##################################################
+# The function returns the minimum size of 
+# positive matching decompositions of the graph G 
+# by analyzing antler-free part of G.
+##################################################
+MinimumPositiveMatchingDecompositionSizeAntlerFree := function(G)
+local mpmds, matching, antlerfree;
+if IsNullGraph(G) then
+	return 0;
+else
+	antlerfree := AntlerFreePart(G);
+	mpmds := Number(UndirectedEdges(antlerfree));
+	for matching in MaximalPositiveMatchings(antlerfree) do
+		mpmds := Minimum(mpmds, 1 + MinimumPositiveMatchingDecompositionSize(RemoveEdges(antlerfree, matching)));
+	od;
+	return Maximum(Maximum(VertexDegrees(G)), mpmds);
+fi;
+end;
+
+
+##################################################
+# The function returns a minimum sized positive 
+# matching decomposition of the graph G.
+##################################################
+MinimumPositiveMatchingDecomposition := function(G)
+local mpmd, mpmds, matching, subgraphmpmd;
+if IsNullGraph(G) then
+	return [];
+else
+	mpmd := List(UndirectedEdges(G), e -> [e]);
+	mpmds := Number(mpmd);
+	for matching in MaximalPositiveMatchings(G) do
+		subgraphmpmd := MinimumPositiveMatchingDecomposition(RemoveEdges(G, matching));
+		if Number(subgraphmpmd) + 1 < mpmds then
+			mpmds := Number(subgraphmpmd) + 1;
+			mpmd := Concatenation([matching], subgraphmpmd);
+		fi;
+	od;
+	return mpmd;
+fi;
+end;
+
+##################################################
+# The function returns a positive matching 
+# decomposition of the complete graph Kn.
+##################################################
+CompleteGraphPositiveMatchingDecomposition := function(n)
+local pmd, edges, savedvertices, neighbors, bound, level, i, j, matching;
+
+pmd := [];
+edges := [];
+
+for i in [1..(n - 1)] do
+	for j in [(i + 1)..n] do
+		if IsOddInt(i) then 
+			AddSet(edges, [i, j]);
+		else
+			AddSet(edges, [j, i]);
+		fi;
+	od;
+od;
+
+bound := 1;
+level := 0;
+while Number(edges)>0 do
+	level := level+1;
+	pmd[level] := [];
+	matching := [];
+
+	if level<n then
+		pmd[level] := [[1, level+1]];
+		matching := [1, level+1];
+		RemoveSet(edges, [1, level+1]);
+	fi;
+
+	for i in [2..bound] do
+		if not i in matching then
+			neighbors := Filtered(Filtered([1..bound], x -> [i, x] in edges), x -> not x in matching);
+			if Number(neighbors) > 0 then
+				j := neighbors[1];
+				AddSet(pmd[level], [i, j]);
+				matching := UnionSet(matching, [i, j]);
+				RemoveSet(edges, [i, j]);
+			fi;
+		fi;
+	od;
+
+	bound := Minimum(n, bound + 1);
+od;
+
+return pmd;
+end;
+
+##################################################
+# The function returns a positive matching 
+# decomposition of the graph G via minimum slopes 
+# algorithm.
+##################################################
+PositiveMatchingDecompositionBySlopes := function(G)
+local pmd, pmdsize, bipartition, partsizes, usedvertices, \
+	min, max, u, v, edges, edge, savedv, uindex, vindex, \
+	slopes, minslope, searchmate, remainedvertices, minuslope;
+
+pmd := [ ];
+pmdsize := 0;
+bipartition := Bicomponents(G);
+partsizes := [Number(bipartition[1]), Number(bipartition[2])];
+edges := UndirectedEdges(G);
+slopes := [ ];
+
+for uindex in [1..partsizes[1]] do
+	u := bipartition[1][uindex];
+	for vindex in [1..partsizes[2]] do
+		v := bipartition[2][vindex];
+		min := Minimum(u, v);
+		max := Maximum(u, v);
+		if [min, max] in edges then
+			AddSet(slopes, vindex - uindex);
+		fi;
+	od;
+od;
+
+while Number(edges) > 0 do
+	usedvertices := [ ];
+	Add(pmd, [ ]);
+	pmdsize := pmdsize + 1;
+	minslope := Minimum(slopes);
+
+	for uindex in [1..partsizes[1]] do
+		u := bipartition[1][uindex];
+		vindex := 1;
+		searchmate := true;
+		while vindex <= partsizes[2] and searchmate do
+			v := bipartition[2][vindex];
+			min := Minimum(u, v);
+			max := Maximum(u, v);
+			if [min, max] in edges and vindex - uindex = minslope then
+				usedvertices := UnionSet(usedvertices, [min, max]);
+				RemoveSet(edges, [min, max]);
+				Add(pmd[pmdsize], [min, max]);
+				searchmate := false;
+			fi;
+			vindex := vindex + 1;
+		od;
+	od;
+
+	if Number(pmd[pmdsize]) > 0 then
+		remainedvertices := Filtered(bipartition[1], x -> not x in usedvertices);
+
+		while Number(remainedvertices) > 0 do
+			u := Minimum(remainedvertices);
+			uindex := Position(bipartition[1], u);
+
+			minuslope := Maximum(slopes) + 1;
+			savedv := 0;
+			edge := [];
+
+			for vindex in [1..partsizes[2]] do
+				v := bipartition[2][vindex];
+
+				min := Minimum(u, v);
+				max := Maximum(u, v);
+
+				if [min, max] in edges then
+					if vindex - uindex < minuslope then
+						minuslope := vindex - uindex;
+						edge := [min, max];
+						savedv := v;
+					fi;
+				fi;
+			od;
+
+			if savedv > 0 and not savedv in usedvertices then
+				Add(pmd[pmdsize], edge);
+				usedvertices := UnionSet(usedvertices, edge);
+				RemoveSet(edges, edge);
+			fi;
+
+			RemoveSet(remainedvertices, u);
+		od;
+	else
+		Remove(pmdsize, pmdsize);
+		pmdsize := pmdsize - 1;
+	fi;
+
+	RemoveSet(slopes, minslope);
+od;
+
+return pmd;
+end;
+
+AFP := AntlerFreePart;
+CGPMD := CompleteGraphPositiveMatchingDecomposition;
+IM := IsMatching;
+IPM := IsPositiveMatching;
+IPMN := IsPositiveMatchingN;
+ME := MaximalElements;
+MPM := MaximalPositiveMatchings;
+MPMD := MinimumPositiveMatchingDecomposition;
+MPMDS := MinimumPositiveMatchingDecompositionSize;
+MPMDSAF := MinimumPositiveMatchingDecompositionSizeAntlerFree;
+PMDBS := PositiveMatchingDecompositionBySlopes;
+RE := RemoveEdges;

@@ -1,0 +1,91 @@
+body 
+{
+    font-family: "Tahoma";
+    color: brown;
+    background-color: antiquewhite;
+}
+
+a
+{
+    text-decoration: none;
+    color: brown;
+}
+
+a:hover
+{
+    text-decoration: none;
+    font-weight: bold;
+}
+
+table
+{
+    border-collapse: collapse;
+    padding: 0px;
+}
+
+table.titles
+{
+    border: 2px;
+    border-color: coral;
+    border-top-style: solid;
+    border-bottom-style: solid;
+    background-color: floralwhite;
+}
+
+table.titles th
+{
+    border: 1px dotted;
+    padding: 2px;
+}
+
+table.titles td
+{
+
+    padding: 5px;
+    text-align: center;
+}
+
+table.titles td:hover
+{
+    background-color: salmon;
+    color: white;
+}
+
+li 
+{
+    line-height: 200%
+}
+
+ref
+{
+    color: burlywood;
+}
+
+hr.thick
+{
+    height: 5px;
+    background-color: brown;
+    border-color: sandybrown;
+}
+
+hr.thin
+{
+    height: 1px;
+    background-color: brown;
+    border-color: sandybrown;
+}
+
+table.links
+{
+    position: fixed;
+    bottom: 0;
+    left: 10%;
+    right: 10%;
+    text-align: center;
+    background-color: antiquewhite;
+}
+
+.items:hover
+{
+    font-weight: bold;    
+}
