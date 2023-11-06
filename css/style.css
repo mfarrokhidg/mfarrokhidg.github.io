@@ -89,3 +89,9 @@ table.links
 {
     font-weight: bold;    
 }
+
+.date-info td:first-child+td
+{
+	max-width:100%;
+    white-space: nowrap;
+}
